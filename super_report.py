@@ -47,19 +47,22 @@ def loss_expired(date_str):
         # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
         # Thus if the requested report period is a YEAR.
         if len(date_str) == 4:
-            # Turn the date string argument in a datetime object for future comparison with the expiration date
-            date = datetime.strptime(date_str, "%Y")     
-            # Loop through the expired DF       
-            for i,r in df_exp.iterrows():
-                # If the row is not expired in given year, it is irrelevant, thus dropped from this DF
-                if r['Expiration_Date'].year != date.year:
-                    df_exp.drop(i, inplace=True)
-            # If there are no records found in the remaining DF, the total loss is equal to 0
-            if df_exp.empty:
-                total_loss = 0
-            # Else use the filter + .sum() option to determine the total loss (accumulates all values in the Total_Loss column).
-            else:
-                total_loss = df_exp['Total_Loss'].sum()
+            try:
+                # Turn the date string argument in a datetime object for future comparison with the expiration date
+                date = datetime.strptime(date_str, "%Y")     
+                # Loop through the expired DF       
+                for i,r in df_exp.iterrows():
+                    # If the row is not expired in given year, it is irrelevant, thus dropped from this DF
+                    if r['Expiration_Date'].year != date.year:
+                        df_exp.drop(i, inplace=True)
+                # If there are no records found in the remaining DF, the total loss is equal to 0
+                if df_exp.empty:
+                    total_loss = 0
+                # Else use the filter + .sum() option to determine the total loss (accumulates all values in the Total_Loss column).
+                else:
+                    total_loss = df_exp['Total_Loss'].sum()
+            except ValueError:
+                text = f'{date_str} can not be processed as a year. Try for example 1999 or 2023 (YYYY)'
 
         # Check if the parsed date has the length of 7 characters, hence potentially being a YYYY-MM string.  
         # Thus the requested report is a specific MONTH of a specific YEAR
@@ -117,104 +120,119 @@ def loss_expired(date_str):
 def inventory_report(inv_date):
     # Give the date from the argument a str format and store it in a new variable (the referral date)
     ref_date = str(inv_date)
-    # Open bought.csv in DF
-    df_bought = pd.read_csv(bought_path)
-    # Filter bought DF for purchases up until referral date and expired products prior given referral date
-    filt_b = (df_bought['Buy_Date'] <= ref_date) & (df_bought['Expiration_Date'] > ref_date)
-    df_bought_filt = df_bought.loc[filt_b]
     
-    # Open sold.csv in DF if file exists
-    try: 
-        df_sold = pd.read_csv(sold_path)
-        # Filter sold DF for sales up until given date
-        filt_s = (df_sold['Sell_Date'] <= ref_date)
-        df_sold_filt = df_sold.loc[filt_s]
-         # Determine if there are sold items to be deducted. 
-        # If empty, no sold stock to be deducted per that date.
-        if df_sold_filt.empty:
-            pass
-        # Else process amounts to be deducted per buy_id
+    try:   
+        # Open bought.csv in DF
+        df_bought = pd.read_csv(bought_path)
+        # Filter bought DF for purchases up until referral date and expired products prior given referral date
+        filt_b = (df_bought['Buy_Date'] <= ref_date) & (df_bought['Expiration_Date'] > ref_date)
+        df_bought_filt = df_bought.loc[filt_b]
+        
+        # Check if sold.csv file exists in working directory
+        if os.path.exists(sold_path):
+            # Open sold.csv in a DF
+            df_sold = pd.read_csv(sold_path)
+            # Filter sold DF for sales up until given date
+            filt_s = (df_sold['Sell_Date'] <= ref_date)
+            df_sold_filt = df_sold.loc[filt_s]
+            # Determine if there are sold items to be deducted. 
+            # If empty, no sold stock to be deducted from the bought DF per that date.
+            if df_sold_filt.empty:
+                pass
+            # Else process amounts to be deducted per buy_id from the bought DF
+            else:
+                # Retrieve buy_ids of the sold products from the DF and change type from str to list
+                df_sold_filt['Buy_ID'] = df_sold_filt['Buy_ID'].apply(retrieve_buyid)
+                # Iterate over the rows in the filtered sold DF
+                for sold_index, sold_row in df_sold_filt.iterrows():
+                    # Determine total quantity per sale and the according Buy_ID(s)
+                    sold_quantity = sold_row['Quantity']
+                    buy_id_sold = sold_row['Buy_ID']
+                    # Loop over the Buy_ID(s)
+                    for id in buy_id_sold:
+                        # Iterate over the rows in the filtered bought DF to match Buy_ID records
+                        for buy_index, buy_row in df_bought_filt.iterrows():
+                            if buy_row['Buy_ID'] == id:
+                                # If the total quantity of this Buy_ID was larger than or equal to the sold_quantity, 
+                                # it is a simple deduction from the corresponding Buy_ID Quantity in the filtered bought DF
+                                if buy_row['Quantity'] >= sold_quantity:
+                                    df_bought_filt.loc[buy_index, 'Quantity'] = (buy_row['Quantity'] - sold_quantity)
+                                # Else, the whole row of this Buy_ID has to be removed from the filt bought DF
+                                # And the sold_quantity is deducted by the total remaining quantity of that Buy_ID
+                                # The remaining sold_quantity is used in the next loop of the following buy_id
+                                else:
+                                    sold_quantity -= (buy_row['Quantity'])
+                                    df_bought_filt.drop(buy_index, inplace=True)
         else:
-            # Retrieve buy_ids of the sold products from the DF and change type from str to list
-            df_sold_filt['Buy_ID'] = df_sold_filt['Buy_ID'].apply(retrieve_buyid)
-            # Iterate over the rows in the filtered sold DF
-            for sold_index, sold_row in df_sold_filt.iterrows():
-                # Determine total quantity per sale and the according Buy_ID(s)
-                sold_quantity = sold_row['Quantity']
-                buy_id_sold = sold_row['Buy_ID']
-                # Loop over the Buy_ID(s)
-                for id in buy_id_sold:
-                    # Iterate over the rows in the filtered bought DF to match Buy_ID records
-                    for buy_index, buy_row in df_bought_filt.iterrows():
-                        if buy_row['Buy_ID'] == id:
-                            # If the total quantity of this Buy_ID was larger than or equal to the sold_quantity, 
-                            # it is a simple deduction from the corresponding Buy_ID Quantity in the filtered bought DF
-                            if buy_row['Quantity'] >= sold_quantity:
-                                df_bought_filt.loc[buy_index, 'Quantity'] = (buy_row['Quantity'] - sold_quantity)
-                            # Else, the whole row of this Buy_ID has to be removed from the filt bought DF
-                            # And the sold_quantity is deducted by the total remaining quantity of that Buy_ID
-                            # The remaining sold_quantity is used in the next loop of the following buy_id
-                            else:
-                                sold_quantity -= (buy_row['Quantity'])
-                                df_bought_filt.drop(buy_index, inplace=True)
+            pass
+        
+        # Check if expired.csv exists in working directory
+        if os.path.exists(exp_path):
+            # If so, open expired.csv in a separate DF
+            df_exp = pd.read_csv(exp_path)
+            # Filter the DF for products with an expiration date up until referral date
+            filt_e = (df_exp['Expiration_Date'] <= ref_date)
+            df_exp_filt = df_exp.loc[filt_e]
+            # Loop through each row of the filtered EXPIRED DF and temporarily store each row's Buy_ID in a variable
+            for exp_index, exp_row in df_exp_filt.iterrows():
+                buy_id_exp = exp_row['Buy_ID']
+                # Loop through each row of the filtered BOUGHT DF to find a match for the expired Buy_ID
+                for buy_index, buy_row in df_bought_filt.iterrows():
+                    # If Buy_IDs match, the row in the filtered BOUGHT DF is removed entirely
+                    if buy_row['Buy_ID'] == buy_id_exp:
+                        df_bought_filt.drop(buy_index, inplace=True)    
+        # If expired.csv file does not exist, no expired quantities have to be deducted from the bought DF.
+        else:
+            pass
+
+        # Rendering a table through the Rich module to present the final DF after all filtering is completed.
+        table = Table(
+        title='- - - - - - - - - - - -  I N V E N T O R Y  - - - - - - - - - - - -', 
+        title_style = 'bold cyan on white', 
+        style='cyan')
+
+        show_index = False
+
+        # Loop through the columns of the filtered DF to determine the headers' names and set styling.
+        for column in df_bought_filt.columns:
+            table.add_column(
+                str(column), 
+                header_style='bold bright_white on cyan',
+                style='bright_white on cyan')
+        
+        # Loop through each row of the filtered DF to find all values for each column and fill the table
+        for index, value_list in enumerate(df_bought_filt.values.tolist()):
+                row = [str(index)] if show_index else []
+                row += [str(x) for x in value_list]
+                table.add_row(*row)
+
+        console = Console()
+
+        return console.print(table)
+    
     except FileNotFoundError:
-        pass
+        text = Text('No purchases are found!')
+        text.stylize('bold red on white')
+        console = Console()
+        return console.print(text)
     
-    # Check if expired.csv exists in working directory
-    if os.path.exists(exp_path):
-        # If so, open expired.csv in a separate DF
-        df_exp = pd.read_csv(exp_path)
-        # Filter the DF for products with an expiration date up until referral date
-        filt_e = (df_exp['Expiration_Date'] <= ref_date)
-        df_exp_filt = df_exp.loc[filt_e]
-        # Loop through each row of the filtered EXPIRED DF and temporarily store each row's Buy_ID in a variable
-        for exp_index, exp_row in df_exp_filt.iterrows():
-            buy_id_exp = exp_row['Buy_ID']
-            # Loop through each row of the filtered BOUGHT DF to find a match for the expired Buy_ID
-            for buy_index, buy_row in df_bought_filt.iterrows():
-                # If Buy_IDs match, the row in the filtered BOUGHT DF is removed entirely
-                if buy_row['Buy_ID'] == buy_id_exp:
-                    df_bought_filt.drop(buy_index, inplace=True)    
-    # If expired.csv file does not exist, the EXPIRED DF remains empty.
-    else:
-        pass
-
-    # Rendering a table through the Rich module to present the final DF after all filtering is completed.
-    table = Table(
-      title='- - - - - - - - - - - -  I N V E N T O R Y  - - - - - - - - - - - -', 
-      title_style = 'bold cyan on white', 
-      style='cyan')
-
-    show_index = False
-
-    # Loop through the columns of the filtered DF to determine the headers' names and set styling.
-    for column in df_bought_filt.columns:
-        table.add_column(
-            str(column), 
-            header_style='bold bright_white on cyan',
-            style='bright_white on cyan')
-    
-    # Loop through each row of the filtered DF to find all values for each column and fill the table
-    for index, value_list in enumerate(df_bought_filt.values.tolist()):
-            row = [str(index)] if show_index else []
-            row += [str(x) for x in value_list]
-            table.add_row(*row)
-
-    console = Console()
-
-    return console.print(table)
-
 # ________________________ REVENUE REPORT ________________________
 
 def revenue_report(date_str):
     
-    # Check if sold.csv exists in working directory
-    if os.path.exists(sold_path):
+    try:
+        # Check if sold.csv exists in working directory. 
+        # If not, controled FileNotFoundError raised.
         # If so, create a date parser in preparation to read the file as a DF and 
         # turn all Expiration_Dates in a datetime object immediately
         d_parser = lambda x: datetime.strptime(x, '%Y-%m-%d')
         df_sold = pd.read_csv(sold_path, parse_dates=['Sell_Date'],date_parser=d_parser)
-
+        
+        # Check if given argument can be considered a datetime object.
+        # If not, a controled ValueError is raised
+        # If so, further processing can continue
+        pd.Timestamp(date_str).date()
+        
         # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
         # Thus if the requested report period is a YEAR.
         if len(date_str) == 4:
@@ -293,31 +311,39 @@ def revenue_report(date_str):
                 text = Text(f'On {date.date()} the total revenue was: €{total_revenue}')
                 text.stylize('bold cyan on white')
 
-    # If there is no sold.csv file found, return no registered sales were found.
-    else:
-        text = Text(f'No registered sales were found.')
+    except FileNotFoundError:
+        text = Text('No registered sales were found.')
         text.stylize('bold red on white')
     
+    except ValueError:
+        text = Text('Incorrect input for date. Try year (YYYY), month (YYYY-MM) or date (YYYY-MM-DD) instead')
+        text.stylize('bold red on white')
+
     # All returned text is styled with the Rich Module
     console = Console()
 
     return console.print(text)
 
-
 # ________________________ PROFIT REPORT ________________________
 
 def profit_report(date_str):
     
-    # Determine the potential loss from expired products on given date/period (argument).
-    # The amount is determined through another function, loss_expired. See above.
-    total_loss_expired = loss_expired(date_str)
-
-    # Check if sold.csv exists in working directory
-    if os.path.exists(sold_path):
+    try:
+        # Check if sold.csv exists in working directory. 
+        # If not, controled FileNotFoundError raised.
         # If so, create a date parser in preparation to read the file as a DF and 
         # turn all Expiration_Dates in a datetime object immediately
         d_parser = lambda x: datetime.strptime(x, '%Y-%m-%d')
         df_sold = pd.read_csv(sold_path, parse_dates=['Sell_Date'],date_parser=d_parser)
+        
+        # Check if given argument can be considered a datetime object.
+        # If not, a controled ValueError is raised
+        # If so, further processing can continue
+        pd.Timestamp(date_str).date()
+
+        # Determine the potential loss from expired products on given date/period (argument).
+        # The amount is determined through another function, loss_expired. See above.
+        total_loss_expired = loss_expired(date_str)
 
         # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
         # Thus if the requested report period is a YEAR.
@@ -399,11 +425,14 @@ def profit_report(date_str):
                 text = Text(f'On {date.date()} the total profit was: €{total_profit - total_loss_expired}')
                 text.stylize('bold cyan on white')
     
-    # If there is no sold.csv file found, return no registered sales were found.
-    else:
-        text = Text(f'No registered sales were found.')
+    except FileNotFoundError:
+        text = Text('No registered sales were found.')
         text.stylize('bold red on white')
     
+    except ValueError:
+        text = Text('Incorrect input for date. Try year (YYYY), month (YYYY-MM) or date (YYYY-MM-DD) instead')
+        text.stylize('bold red on white')
+
     # All returned text is styled with the Rich Module
     console = Console()
 
