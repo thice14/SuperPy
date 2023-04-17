@@ -31,7 +31,7 @@ def buying(buy_product_name, buy_quantity, buy_price_pu, buy_date, expiration_da
             'Product_Name': [buy_product_name],
             'Quantity': [buy_quantity],
             'Unit_Price': [buy_price_pu],
-            'Total_Price': [float(round(int(buy_quantity) * float(buy_price_pu),2))],
+            'Total_Price': [round(int(buy_quantity) * float(buy_price_pu),2)],
             'Buy_Date': [buy_date],
             'Expiration_Date': [expiration_date]
         }
@@ -50,7 +50,7 @@ def buying(buy_product_name, buy_quantity, buy_price_pu, buy_date, expiration_da
         'Product_Name': [buy_product_name],
         'Quantity': [buy_quantity],
         'Unit_Price': [buy_price_pu],
-        'Total_Price': [float(round(int(buy_quantity) * float(buy_price_pu)),2)],
+        'Total_Price': [round(int(buy_quantity) * float(buy_price_pu),2)],
         'Buy_Date': [buy_date],
         'Expiry_Date': [expiration_date]
         }
