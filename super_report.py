@@ -123,39 +123,42 @@ def inventory_report(inv_date):
     filt_b = (df_bought['Buy_Date'] <= ref_date) & (df_bought['Expiration_Date'] > ref_date)
     df_bought_filt = df_bought.loc[filt_b]
     
-    # Open sold.csv in DF
-    df_sold = pd.read_csv(sold_path)
-    # Filter sold DF for sales up until given date
-    filt_s = (df_sold['Sell_Date'] <= ref_date)
-    df_sold_filt = df_sold.loc[filt_s]
-    # Determine if there are sold items to be deducted. 
-    # If empty, no sold stock to be deducted per that date.
-    if df_sold_filt.empty:
-        df_sold = None
-    # Else process amounts to be deducted per buy_id
-    else:
-        # Retrieve buy_ids of the sold products from the DF and change type from str to list
-        df_sold_filt['Buy_ID'] = df_sold_filt['Buy_ID'].apply(retrieve_buyid)
-        # Iterate over the rows in the filtered sold DF
-        for sold_index, sold_row in df_sold_filt.iterrows():
-            # Determine total quantity per sale and the according Buy_ID(s)
-            sold_quantity = sold_row['Quantity']
-            buy_id_sold = sold_row['Buy_ID']
-            # Loop over the Buy_ID(s)
-            for id in buy_id_sold:
-                # Iterate over the rows in the filtered bought DF to match Buy_ID records
-                for buy_index, buy_row in df_bought_filt.iterrows():
-                    if buy_row['Buy_ID'] == id:
-                        # If the total quantity of this Buy_ID was larger than or equal to the sold_quantity, 
-                        # it is a simple deduction from the corresponding Buy_ID Quantity in the filtered bought DF
-                        if buy_row['Quantity'] >= sold_quantity:
-                            df_bought_filt.loc[buy_index, 'Quantity'] = (buy_row['Quantity'] - sold_quantity)
-                        # Else, the whole row of this Buy_ID has to be removed from the filt bought DF
-                        # And the sold_quantity is deducted by the total remaining quantity of that Buy_ID
-                        # The remaining sold_quantity is used in the next loop of the following buy_id
-                        else:
-                            sold_quantity -= (buy_row['Quantity'])
-                            df_bought_filt.drop(buy_index, inplace=True)
+    # Open sold.csv in DF if file exists
+    try: 
+        df_sold = pd.read_csv(sold_path)
+        # Filter sold DF for sales up until given date
+        filt_s = (df_sold['Sell_Date'] <= ref_date)
+        df_sold_filt = df_sold.loc[filt_s]
+         # Determine if there are sold items to be deducted. 
+        # If empty, no sold stock to be deducted per that date.
+        if df_sold_filt.empty:
+            pass
+        # Else process amounts to be deducted per buy_id
+        else:
+            # Retrieve buy_ids of the sold products from the DF and change type from str to list
+            df_sold_filt['Buy_ID'] = df_sold_filt['Buy_ID'].apply(retrieve_buyid)
+            # Iterate over the rows in the filtered sold DF
+            for sold_index, sold_row in df_sold_filt.iterrows():
+                # Determine total quantity per sale and the according Buy_ID(s)
+                sold_quantity = sold_row['Quantity']
+                buy_id_sold = sold_row['Buy_ID']
+                # Loop over the Buy_ID(s)
+                for id in buy_id_sold:
+                    # Iterate over the rows in the filtered bought DF to match Buy_ID records
+                    for buy_index, buy_row in df_bought_filt.iterrows():
+                        if buy_row['Buy_ID'] == id:
+                            # If the total quantity of this Buy_ID was larger than or equal to the sold_quantity, 
+                            # it is a simple deduction from the corresponding Buy_ID Quantity in the filtered bought DF
+                            if buy_row['Quantity'] >= sold_quantity:
+                                df_bought_filt.loc[buy_index, 'Quantity'] = (buy_row['Quantity'] - sold_quantity)
+                            # Else, the whole row of this Buy_ID has to be removed from the filt bought DF
+                            # And the sold_quantity is deducted by the total remaining quantity of that Buy_ID
+                            # The remaining sold_quantity is used in the next loop of the following buy_id
+                            else:
+                                sold_quantity -= (buy_row['Quantity'])
+                                df_bought_filt.drop(buy_index, inplace=True)
+    except FileNotFoundError:
+        pass
     
     # Check if expired.csv exists in working directory
     if os.path.exists(exp_path):
@@ -174,7 +177,7 @@ def inventory_report(inv_date):
                     df_bought_filt.drop(buy_index, inplace=True)    
     # If expired.csv file does not exist, the EXPIRED DF remains empty.
     else:
-        df_exp = None
+        pass
 
     # Rendering a table through the Rich module to present the final DF after all filtering is completed.
     table = Table(

@@ -52,7 +52,7 @@ def buying(buy_product_name, buy_quantity, buy_price_pu, buy_date, expiration_da
         'Unit_Price': [buy_price_pu],
         'Total_Price': [round(int(buy_quantity) * float(buy_price_pu),2)],
         'Buy_Date': [buy_date],
-        'Expiry_Date': [expiration_date]
+        'Expiration_Date': [expiration_date]
         }
         # Dictionary is turned into a dataframe with the Pandas Module.
         df_buy = pd.DataFrame(purchase)
