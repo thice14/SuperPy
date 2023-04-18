@@ -20,8 +20,8 @@ exp_path = os.path.join(wd, 'expired.csv')
 def main():
       pass
 
-# When Buy_ID is found for a sale record, it is appended to a list and saved in the sold DF.
-# When the sold DF is stored, the Buy_ID list is turned into a string.
+# When Buy_ID is found for a sale record, it is appended to a list and saved in the 'sold' DF.
+# When the 'sold' DF is stored, the Buy_ID list is turned into a string.
 # For example: ['B1'] or ['B1', 'B2']
 # Following function will return the Buy_ID string back to a list.
 # Basically removes all characters that are NOT 'B' or an integer and then append it to a new list and return it.
@@ -47,29 +47,27 @@ def loss_expired(date_str):
         # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
         # Thus if the requested report period is a YEAR.
         if len(date_str) == 4:
-            try:
-                # Turn the date string argument in a datetime object for future comparison with the expiration date
-                date = datetime.strptime(date_str, "%Y")     
-                # Loop through the expired DF       
-                for i,r in df_exp.iterrows():
-                    # If the row is not expired in given year, it is irrelevant, thus dropped from this DF
-                    if r['Expiration_Date'].year != date.year:
-                        df_exp.drop(i, inplace=True)
-                # If there are no records found in the remaining DF, the total loss is equal to 0
-                if df_exp.empty:
-                    total_loss = 0
-                # Else use the filter + .sum() option to determine the total loss (accumulates all values in the Total_Loss column).
-                else:
-                    total_loss = df_exp['Total_Loss'].sum()
-            except ValueError:
-                text = f'{date_str} can not be processed as a year. Try for example 1999 or 2023 (YYYY)'
+            # Turn the date string argument in a datetime object for future comparison with the expiration date
+            date = datetime.strptime(date_str, "%Y")     
+            # Loop through the rows of the 'expired' DF       
+            for i,r in df_exp.iterrows():
+                # If the row is not expired in given year, it is irrelevant, thus dropped from this DF
+                if r['Expiration_Date'].year != date.year:
+                    df_exp.drop(i, inplace=True)
+            # If there are no records found in the remaining DF, the total loss is equal to 0
+            if df_exp.empty:
+                total_loss = 0
+            # Else use the filter + .sum() option to determine the total loss (accumulates all values in the Total_Loss column).
+            else:
+                total_loss = df_exp['Total_Loss'].sum()
+
 
         # Check if the parsed date has the length of 7 characters, hence potentially being a YYYY-MM string.  
         # Thus the requested report is a specific MONTH of a specific YEAR
         elif len(date_str) == 7:
             # Turn the date string argument in a datetime object for future comparison with the expiration date
             date = datetime.strptime(date_str, "%Y-%m")
-            # Loop through the rows of the expired DF 
+            # Loop through the rows of the 'expired' DF 
             for i,r in df_exp.iterrows():
                 # If the row's Sell_Date's year is equal to the arguments year, continue.
                 if r['Sell_Date'].year == date.year:
@@ -110,7 +108,7 @@ def loss_expired(date_str):
             else:
                 total_loss = df_exp_filt['Total_Loss'].sum()
     
-    # If the expired.csv does not exist, total_loss is equal to 0
+    # If the expired.csv file does not exist, total_loss from expired products is equal to 0
     else:
         total_loss = 0
     
@@ -124,7 +122,7 @@ def inventory_report(inv_date):
     try:   
         # Open bought.csv in DF
         df_bought = pd.read_csv(bought_path)
-        # Filter bought DF for purchases up until referral date and expired products prior given referral date
+        # Filter 'bought' DF for purchases up until referral date, and expired products prior given referral date
         filt_b = (df_bought['Buy_Date'] <= ref_date) & (df_bought['Expiration_Date'] > ref_date)
         df_bought_filt = df_bought.loc[filt_b]
         
@@ -132,32 +130,32 @@ def inventory_report(inv_date):
         if os.path.exists(sold_path):
             # Open sold.csv in a DF
             df_sold = pd.read_csv(sold_path)
-            # Filter sold DF for sales up until given date
+            # Filter 'sold' DF for sales up until given date
             filt_s = (df_sold['Sell_Date'] <= ref_date)
             df_sold_filt = df_sold.loc[filt_s]
             # Determine if there are sold items to be deducted. 
-            # If empty, no sold stock to be deducted from the bought DF per that date.
+            # If empty, no sold stock to be deducted from the 'bought' DF per that date.
             if df_sold_filt.empty:
                 pass
-            # Else process amounts to be deducted per buy_id from the bought DF
+            # Else process amounts to be deducted per buy_id from the 'bought' DF
             else:
                 # Retrieve buy_ids of the sold products from the DF and change type from str to list
                 df_sold_filt['Buy_ID'] = df_sold_filt['Buy_ID'].apply(retrieve_buyid)
-                # Iterate over the rows in the filtered sold DF
+                # Iterate over the rows in the filtered 'sold' DF
                 for sold_index, sold_row in df_sold_filt.iterrows():
                     # Determine total quantity per sale and the according Buy_ID(s)
                     sold_quantity = sold_row['Quantity']
                     buy_id_sold = sold_row['Buy_ID']
                     # Loop over the Buy_ID(s)
                     for id in buy_id_sold:
-                        # Iterate over the rows in the filtered bought DF to match Buy_ID records
+                        # Iterate over the rows in the filtered 'bought' DF to match Buy_ID records
                         for buy_index, buy_row in df_bought_filt.iterrows():
                             if buy_row['Buy_ID'] == id:
                                 # If the total quantity of this Buy_ID was larger than or equal to the sold_quantity, 
-                                # it is a simple deduction from the corresponding Buy_ID Quantity in the filtered bought DF
+                                # it is a simple deduction from the corresponding Buy_ID Quantity in the filtered 'bought' DF
                                 if buy_row['Quantity'] >= sold_quantity:
                                     df_bought_filt.loc[buy_index, 'Quantity'] = (buy_row['Quantity'] - sold_quantity)
-                                # Else, the whole row of this Buy_ID has to be removed from the filt bought DF
+                                # Else, the whole row of this Buy_ID has to be removed from the filt 'bought' DF
                                 # And the sold_quantity is deducted by the total remaining quantity of that Buy_ID
                                 # The remaining sold_quantity is used in the next loop of the following buy_id
                                 else:
@@ -173,15 +171,15 @@ def inventory_report(inv_date):
             # Filter the DF for products with an expiration date up until referral date
             filt_e = (df_exp['Expiration_Date'] <= ref_date)
             df_exp_filt = df_exp.loc[filt_e]
-            # Loop through each row of the filtered EXPIRED DF and temporarily store each row's Buy_ID in a variable
+            # Loop through each row of the filtered 'expired' DF and temporarily store each row's Buy_ID in a variable
             for exp_index, exp_row in df_exp_filt.iterrows():
                 buy_id_exp = exp_row['Buy_ID']
-                # Loop through each row of the filtered BOUGHT DF to find a match for the expired Buy_ID
+                # Loop through each row of the filtered 'bought' DF to find a match for the expired Buy_ID
                 for buy_index, buy_row in df_bought_filt.iterrows():
-                    # If Buy_IDs match, the row in the filtered BOUGHT DF is removed entirely
+                    # If Buy_IDs match, the row in the filtered 'bought' DF is removed entirely
                     if buy_row['Buy_ID'] == buy_id_exp:
                         df_bought_filt.drop(buy_index, inplace=True)    
-        # If expired.csv file does not exist, no expired quantities have to be deducted from the bought DF.
+        # If expired.csv file does not exist, no expired quantities have to be deducted from the 'bought' DF.
         else:
             pass
 
@@ -211,7 +209,7 @@ def inventory_report(inv_date):
         return console.print(table)
     
     except FileNotFoundError:
-        text = Text('No purchases are found!')
+        text = Text('Have you bought any products yet? I can not find them! (bought.csv not found)')
         text.stylize('bold red on white')
         console = Console()
         return console.print(text)
@@ -238,7 +236,7 @@ def revenue_report(date_str):
         if len(date_str) == 4:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y")
-            # Loop through the rows of the sold DF
+            # Loop through the rows of the 'sold' DF
             for i,r in df_sold.iterrows():
                 # If the row is not sold in given year, it is irrelevant, thus dropped from this DF
                 if r['Sell_Date'].year != date.year:
@@ -262,7 +260,7 @@ def revenue_report(date_str):
             # Use the Calendar Module to determine the name of the asked month for future reporting.
             # The integer given by .month is processed by .month_name into the name of that month (1 = January, etc.)
             name_of_month = cal.month_name[date.month]
-            # Loop through the rows of the sold DF
+            # Loop through the rows of the 'sold' DF
             for i,r in df_sold.iterrows():
                 # If the row's Sell_Date's year is equal to the arguments year, continue.
                 if r['Sell_Date'].year == date.year:
@@ -296,7 +294,7 @@ def revenue_report(date_str):
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y-%m-%d")
             # In the case of a YYYY-MM-DD datetime object, a specific filter can be applied
-            # to immediately show all sold products on that specific sell date in the sold DF            
+            # to immediately show all sold products on that specific sell date in the 'sold' DF            
             filt = (df_sold['Sell_Date'] == date)
             df_sold_filt = df_sold.loc[filt]
             # If there are no records found in the remaining DF, report no sales are registered on given date.            
@@ -312,7 +310,7 @@ def revenue_report(date_str):
                 text.stylize('bold cyan on white')
 
     except FileNotFoundError:
-        text = Text('No registered sales were found.')
+        text = Text('Have you sold any products yet? I can not find them! (sold.csv not found)')
         text.stylize('bold red on white')
     
     except ValueError:
@@ -350,7 +348,7 @@ def profit_report(date_str):
         if len(date_str) == 4:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y")
-            # Loop through the rows of the sold DF
+            # Loop through the rows of the 'sold' DF
             for i,r in df_sold.iterrows():
                 # If the row is not sold in given year, it is irrelevant, thus dropped from this DF
                 if r['Sell_Date'].year != date.year:
@@ -376,7 +374,7 @@ def profit_report(date_str):
             # Use the Calendar Module to determine the name of the asked month for future reporting.
             # The integer given by .month is processed by .month_name into the name of that month (1 = January, etc.)
             name_of_month = cal.month_name[date.month]
-            # Loop through the rows of the sold DF
+            # Loop through the rows of the 'sold' DF
             for i,r in df_sold.iterrows():
                 # If the row's Sell_Date's year is equal to the arguments year, continue.
                 if r['Sell_Date'].year == date.year:
@@ -410,7 +408,7 @@ def profit_report(date_str):
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y-%m-%d")
             # In the case of a YYYY-MM-DD datetime object, a specific filter can be applied
-            # to immediately show all sold products on that specific sell date in the sold DF
+            # to immediately show all sold products on that specific sell date in the 'sold' DF
             filt = (df_sold['Sell_Date'] == date)
             df_sold_filt = df_sold.loc[filt]
             # If there are no records found in the remaining DF, report no sales are registered on given date.
@@ -426,7 +424,7 @@ def profit_report(date_str):
                 text.stylize('bold cyan on white')
     
     except FileNotFoundError:
-        text = Text('No registered sales were found.')
+        text = Text('Have you sold any products yet? I can not find them! (sold.csv not found)')
         text.stylize('bold red on white')
     
     except ValueError:
