@@ -56,14 +56,14 @@ sell_parser.add_argument(
 report_parser = sub_parser.add_parser('report', help="Create a report")
 
 # CREATING SUB PARSERS FOR THE 3 REPORT TYPES: INVENTORY / REVENUE / PROFIT
-sub_parser_report = report_parser.add_subparsers(dest='report_type', help="Inventory, Revenue or Profit")
+sub_parser_report = report_parser.add_subparsers(dest='report_type', help="Inventory, Revenue or Profit Report")
 
 # INVENTORY REPORT PARSER - optional + mutually exclusive: Moment (now, today, tomorrow or yesterday) or Date (YYYY-MM-DD)  
 inv_report_parser = sub_parser_report.add_parser('inventory', help='Generate an Inventory Report per given moment or date')
 inv_report_group = inv_report_parser.add_mutually_exclusive_group()
 inv_report_group.add_argument('-m', '--moment', help='Chose a moment in time to generate the report of: now, today, tomorrow or yesterday.',
                                choices=['now', 'today', 'tomorrow', 'yesterday'], nargs='?', const=1, default='today')
-inv_report_group.add_argument('-d', '--date', help='Select an exact year, month or date to generate a report of. Format: YYYY-MM-DD.', type=lambda d: datetime.strptime(d, '%Y-%m-%d').date())
+inv_report_group.add_argument('-d', '--date', help='Select an exact date to generate a report of. Format: YYYY-MM-DD.', type=lambda d: datetime.strptime(d, '%Y-%m-%d').date())
 
 # REVENUE REPORT PARSER - optional + mutually exclusive: Moment (now, today, tomorrow or yesterday) or Date (YYYY or YYYY-MM or YYYY-MM-DD)
 rev_report_parser = sub_parser_report.add_parser('revenue', help='Generate a Revenue Report')
