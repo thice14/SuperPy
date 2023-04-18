@@ -6,9 +6,9 @@ SuperPy is a Command Line Interface to manage the inventory of a supermarket.
 
 SuperPy is written in Python. 
 
-This usage guide aims to briefly explain the features of each individual module and how to use the script as a whole. In each section below you will find examples of possible command line input.
+This usage guide aims to briefly explain the features of this CLI and how to use it. In each section below you will find examples of possible command line input.
 
-All input for the registration of buys and sells and the changes of stock in time are stored in CSV files, knowingly:
+All input for the registration of purchases and sales, and the changes in the inventory in time, are stored in CSV files, knowingly:
 - bought.csv
 - inventory.csv
 - sold.csv
@@ -16,7 +16,7 @@ All input for the registration of buys and sells and the changes of stock in tim
 
 ## BUYING
 
-The positional argument in buying are: Product Name (str), Quantity (int) and Price per Unit (float). The optional arguments are Buy Date and Expiration Date. The default for Buy Date is today, as per SuperPy's internal calendar (more on that later), and the Expiration Date is 2099-12-31 (i.e. product without an expiry date). All buys are registered in the bought.csv and inventory.csv files. Files will automatically be created when the first buy gets registered.
+The positional arguments in buying are: Product Name (str), Quantity (int) and Price per Unit (float). The optional arguments are Buy Date and Expiration Date. The default for Buy Date is today, as per SuperPy's internal calendar (more on that later), and the default Expiration Date is 2099-12-31 (i.e. product without an expiry date). All purchases are registered both in the bought.csv and inventory.csv files. These files will automatically be created when the first buy gets registered.
 
 ```zsh
 python3 super.py buy Banana 10 0.5
@@ -28,7 +28,7 @@ python3 super.py buy Banana 10 0.5 -bd 2023-05-01 -ed 2023-07-01
 
 ## SELLING
 
-The positional argument in buying are: Product Name (str), Quantity (int) and Price per Unit (float). The only optional argument here is Sell Date. The default for Sell Date is today, again, as per SuperPy's internal calendar. All sells are registered in the sold.csv file. File will automatically be created when the first sell gets successfully registered.
+The positional arguments in buying are: Product Name (str), Quantity (int) and Price per Unit (float). The only optional argument here is Sell Date. The default for Sell Date is today, again, as per SuperPy's internal calendar. All sales are registered in the sold.csv file. File will automatically be created when the first sell gets successfully registered.
 
 ```zsh
 python3 super.py sell Apple 8 0.6
@@ -57,7 +57,7 @@ python3 super.py report revenue --moment yesterday
 python3 super.py report profit --date 2023
 ```
 
-### Inventory
+### Inventory Report
 The inventory report will return a table of all the products available to you as per given date. If no date is given, the report is run with today as the default. Of course, 'today' is again based on SuperPy's internal calendar. There are two optional arguments to chose from: 'date' and 'moment'. 'Date' only accepts the format YYYY-MM-DD as input. For 'moment' you can chose between 'now', 'today', 'tomorrow', and 'yesterday. All self-explanatory, also based on SuperPy's internal calendar.
 
 ```zsh
@@ -68,7 +68,7 @@ python3 super.py report inventory --moment tomorrow
 python3 super.py report inventory -m yesterday
 ```
 
-### Revenue & Profit
+### Revenue & Profit Report
 Both the revenue and profit report will return a text message with the generated revenue/profit for given day, date or timeframe. As per usual, today is the default argument if none is given. Here, there are the same two optional arguments to chose from: 'date' and 'moment'. There is a slight difference for 'date' compared to the inventory report. Here it also accepts the year (YYYY) or the month of the year (YYYY-MM) as input, as well as the full date (YYYY-MM-DD). For 'moment' you can chose again between 'now', 'today', 'tomorrow', and 'yesterday.
 
 ```zsh
