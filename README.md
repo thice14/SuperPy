@@ -4,28 +4,15 @@ Welcome to the usage guide of SuperPy!
 
 SuperPy is a Command Line Interface to manage the inventory of a supermarket. 
 
-SuperPy is written in Python and consists of one main file and seven additional modules:
+SuperPy is written in Python. 
 
-### **Main**
-
-- super.py
-
-### **Modules**
-- super_buy.py
-- super_inventory.py
-- super_expiry.py
-- super_sell.py
-- super_report.py
-- supper_time.py
-- super_time_machine.py
+This usage guide aims to briefly explain the features of each individual module and how to use the script as a whole. In each section below you will find examples of possible command line input.
 
 All input for the registration of buys and sells and the changes of stock in time are stored in CSV files, knowingly:
 - bought.csv
 - inventory.csv
 - sold.csv
 - expired.csv
-
-This usage guide aims to briefly explain the features of each individual module and how to use the script as a whole. In each section below you will find examples of possible command line input.
 
 ## BUYING
 
