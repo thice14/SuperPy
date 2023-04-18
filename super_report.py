@@ -44,8 +44,8 @@ def loss_expired(date_str):
         d_parser = lambda x: datetime.strptime(x, '%Y-%m-%d')
         df_exp = pd.read_csv(exp_path, parse_dates=['Expiration_Date'],date_parser=d_parser)
 
-        # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
-        # Thus if the requested report period is a YEAR.
+        # Check if the parsed date has the length of 4 characters, hence being a YYYY string.
+        # I.e.: the requested report period is a YEAR.
         if len(date_str) == 4:
             # Turn the date string argument in a datetime object for future comparison with the expiration date
             date = datetime.strptime(date_str, "%Y")     
@@ -62,8 +62,8 @@ def loss_expired(date_str):
                 total_loss = df_exp['Total_Loss'].sum()
 
 
-        # Check if the parsed date has the length of 7 characters, hence potentially being a YYYY-MM string.  
-        # Thus the requested report is a specific MONTH of a specific YEAR
+        # Check if the parsed date has the length of 7 characters, hence a YYYY-MM string.  
+        # I.e.: the requested report period is a specific MONTH of a specific YEAR
         elif len(date_str) == 7:
             # Turn the date string argument in a datetime object for future comparison with the expiration date
             date = datetime.strptime(date_str, "%Y-%m")
@@ -92,7 +92,7 @@ def loss_expired(date_str):
             else:
                 total_loss = df_exp['Total_Loss'].sum()
 
-        # In case the length is a different amount of characters, it is potentially being a YYYY-MM-DD string.
+        # In case the length is a different amount of characters, it is a YYYY-MM-DD string.
         else:
             # Turn the date string argument in a datetime object for future comparison with the expiration date
             date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -231,8 +231,8 @@ def revenue_report(date_str):
         # If so, further processing can continue
         pd.Timestamp(date_str).date()
         
-        # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
-        # Thus if the requested report period is a YEAR.
+        # Check if the parsed date has the length of 4 characters, hence a YYYY string.
+        # I.e.: the requested report period is a YEAR.
         if len(date_str) == 4:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y")
@@ -252,8 +252,8 @@ def revenue_report(date_str):
                 text = Text(f'In the year {date.year} the total revenue was: €{total_revenue}')
                 text.stylize('bold cyan on white')
 
-        # Check if the parsed date has the length of 7 characters, hence potentially being a YYYY-MM string.  
-        # Thus the requested report is a specific MONTH of a specific YEAR
+        # Check if the parsed date has the length of 7 characters, hence a YYYY-MM string.  
+        # I.e.: the requested report period is a specific MONTH of a specific YEAR
         elif len(date_str) == 7:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y-%m")
@@ -289,7 +289,7 @@ def revenue_report(date_str):
                 text = Text(f'In {name_of_month} {date.year} the total revenue was: €{total_revenue}')
                 text.stylize('bold cyan on white')
 
-        # In case the length is a different amount of characters, it is potentially a YYYY-MM-DD string.
+        # In case the length is a different amount of characters, it is a YYYY-MM-DD string.
         else:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -343,8 +343,8 @@ def profit_report(date_str):
         # The amount is determined through another function, loss_expired. See above.
         total_loss_expired = loss_expired(date_str)
 
-        # Check if the parsed date has the length of 4 characters, hence potentially being a YYYY string.
-        # Thus if the requested report period is a YEAR.
+        # Check if the parsed date has the length of 4 characters, hence a YYYY string.
+        # I.e.: the requested report period is a YEAR.
         if len(date_str) == 4:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y")
@@ -366,8 +366,8 @@ def profit_report(date_str):
                 text = Text(f'In the year {date.year} the total profit was: €{total_profit - total_loss_expired}')
                 text.stylize('bold cyan on white')
 
-        # Check if the parsed date has the length of 7 characters, hence potentially being a YYYY-MM string.  
-        # Thus the requested report is a specific MONTH of a specific YEAR
+        # Check if the parsed date has the length of 7 characters, hence a YYYY-MM string.  
+        # I.e.: the requested report period is a specific MONTH of a specific YEAR
         elif len(date_str) == 7:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y-%m")
@@ -403,7 +403,7 @@ def profit_report(date_str):
                 text = Text(f'In {name_of_month} {date.year} the total profit was: €{total_profit - total_loss_expired}')
                 text.stylize('bold cyan on white')
         
-        # In case the length is a different amount of characters, it is potentially a YYYY-MM-DD string.
+        # In case the length is a different amount of characters, it is a YYYY-MM-DD string.
         else:
             # Turn the date string argument in a datetime object for future comparison with the sell date
             date = datetime.strptime(date_str, "%Y-%m-%d")
