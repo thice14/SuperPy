@@ -216,8 +216,9 @@ def inventory_report(inv_date):
     
 # ________________________ REVENUE REPORT ________________________
 
-def revenue_report(date_str):
-    
+def revenue_report(date):
+    date_str = str(date)
+
     try:
         # Check if sold.csv exists in working directory. 
         # If not, controled FileNotFoundError raised.
@@ -324,8 +325,9 @@ def revenue_report(date_str):
 
 # ________________________ PROFIT REPORT ________________________
 
-def profit_report(date_str):
-    
+def profit_report(date):
+    date_str = str(date)
+
     try:
         # Check if sold.csv exists in working directory. 
         # If not, controled FileNotFoundError raised.

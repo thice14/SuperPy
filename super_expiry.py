@@ -112,29 +112,35 @@ def check_expired():
         pass
 
 def check_expiry():
-    # Checks the inventory.csv file for expired products
-    # Open inventory.csv in a dataframe with the Pandas Module.
-    df = pd.read_csv(inventory_path)
-    # Determine 'today' as per SuperPy's internal calendar with the Super_Time Module
-    today = st.today()
-    # Loop through the rows of the dateframe.
-    for index, row in df.iterrows():
-        # Make a datetime object of each expiration date so it can be compared against 'today'
-        timestamp = pd.Timestamp(row['Expiration_Date']).date()
-        # If the expiration date has passed, the data is gathered and passed on 
-        # to be registered in the expired.csv and eventually be removed from the inventory
-        if today > timestamp:
-            buy_id = row['Buy_ID']
-            product_name = row['Product_Name']
-            quantity = row['Quantity']
-            price_pu = row['Unit_Price']
-            buy_date = pd.Timestamp(row['Buy_Date']).date()
-            expiration_date = pd.Timestamp(row['Expiration_Date']).date()
-            reg_expired(buy_id, product_name, quantity, price_pu, buy_date, expiration_date)
+    # Check if the inventory.csv file exists
+    if os.path.exists(inventory_path):
+        # Checks the inventory.csv file for expired products
+        # Open inventory.csv in a dataframe with the Pandas Module.
+        df = pd.read_csv(inventory_path)
+        # Determine 'today' as per SuperPy's internal calendar with the Super_Time Module
+        today = st.today()
+        # Loop through the rows of the dateframe.
+        for index, row in df.iterrows():
+            # Make a datetime object of each expiration date so it can be compared against 'today'
+            timestamp = pd.Timestamp(row['Expiration_Date']).date()
+            # If the expiration date has passed, the data is gathered and passed on 
+            # to be registered in the expired.csv and eventually be removed from the inventory
+            if today > timestamp:
+                buy_id = row['Buy_ID']
+                product_name = row['Product_Name']
+                quantity = row['Quantity']
+                price_pu = row['Unit_Price']
+                buy_date = pd.Timestamp(row['Buy_Date']).date()
+                expiration_date = pd.Timestamp(row['Expiration_Date']).date()
+                reg_expired(buy_id, product_name, quantity, price_pu, buy_date, expiration_date)
+    # If file path does not exist, no further action required here. Move on to check expired.csv file
+    else:
+        pass
 
     # Since check_expiry is always triggered by a change in SuperPy's internal calendar, 
     # the expired.csv will automatically be checked for products which might have to be returned 
     # to the inventory, since the calendar can be turned back in time as well.
+
     return check_expired()
             
 if __name__ == '__main__':

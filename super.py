@@ -7,7 +7,7 @@ from datetime import datetime
 from super_buy import buying
 from super_sell import selling
 from super_report import inventory_report, revenue_report, profit_report
-from super_time_machine import time_machine
+from super_time_machine import time_machine, set_time
 
 # WINC REFERENCE ID 
 # Do not change these lines.
@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(
 )
 
 # CREATING SUB PARSERS FOR BUY, SELL, REPORT, ADVANCE_TIME
-sub_parser = parser.add_subparsers(dest='action', help="Select Buy, Sell, Report or Advance Time")
+sub_parser = parser.add_subparsers(dest='action', help="Select Buy, Sell, Report, Set Time or Advance Time")
 
 # BUY PARSER - positional: Product_name, Quantity, Buy_Price_Per_Unit | optional: Buy_Date, Expiration_Date
 buy_parser = sub_parser.add_parser('buy', help="Register a purchase")
@@ -79,7 +79,11 @@ profit_report_group.add_argument('-m', '--moment', help='Chose a moment in time 
                                choices=['today', 'tomorrow', 'yesterday'], nargs='?', const=1, default='today')
 profit_report_group.add_argument('-d', '--date', help='Select an exact year, month or date to generate a report of. Format: YYYY or YYYY-MM or YYYY-MM-DD.', type=str)
 
-# ADVANCE TIME PARSER -
+# SET TIME PARSER
+set_time_parser = sub_parser.add_parser('set_time', help="Set a new date for SuperPy's internal clock.")
+set_time_parser.add_argument('date', type=lambda d: datetime.strptime(d, '%Y-%m-%d').date(), help="Enter the desired date of the sale. Format: YYYY-MM-DD (e.g. 2022-12-19)")
+
+# ADVANCE TIME PARSER
 advance_time_parser = sub_parser.add_parser('advance_time', help="Advance or turn back SuperPy's internal clock by a number of days. Use a positive number to advance time or a negative number to turn back time.")
 advance_time_parser.add_argument('number_of_days', type=int, help="Enter the number of days the you would like to advance or turn back internal timing")
 
@@ -151,6 +155,11 @@ if args.action == 'report':
                 date = st.yesterday()
 
         profit_report(date) # FUNCTION IMPORTED FROM THE SUPER_REPORT.PY MODULE 
+
+# SETTING TIME
+if args.action == 'set_time':
+    new_date = args.date
+    set_time(new_date) # METHOD IMPORTED FROM THE SUPER_TIME_MACHINE.PY MODULE 
 
 # ADVANCING TIME
 if args.action == 'advance_time':

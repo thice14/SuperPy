@@ -14,7 +14,10 @@ date_path = os.path.join(wd, 'date.txt')
 
 # FUNCTIONS
 def main():
-    pass
+    time_machine(2)
+    # date_str = '2023-05-15'
+    # date = pd.Timestamp(date_str).date()
+    # set_time(date)
 
 # Function to advance or turn back time in SuperPy's internal calendar
 def time_machine(amount_days):
@@ -50,7 +53,22 @@ def time_machine(amount_days):
 
     console = Console()
 
-    return console.print(f'You have travelled to: {new_date_str}')
+    return console.print(text)
+
+def set_time(date):
+    # Make a string of the datetime object passed as argument.
+    date_str = date.strftime("%Y-%m-%d")
+    # (Over)write text file date.txt with the new date.
+    with open(date_path, "w") as file:
+        file.write(date_str)
+    
+    # Return a text message, styled with the Rich Module, to confirm the new current date.
+    text = Text(f'You have changed the date to: {date_str}')
+    text.stylize('bold cyan on white')
+
+    console = Console()
+
+    return console.print(text)
 
 if __name__ == '__main__':
     main()
