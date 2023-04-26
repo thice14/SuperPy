@@ -47,6 +47,14 @@ python3 super.py advance_time -10
 
 When time is advanced, the inventory.csv file will be checked for possibly unsold products that are now expired. These quantities are removed from the inventory and get registered in the expired.csv file. Or vice versa, when time is turned back, stock that was earlier registered as not sold before the expiration date, becomes now available again in the inventory.
 
+## SET TIME
+
+Through the SET TIME function you can also manually adjust the internal clock to an exact date. It only requires one argument: the desired date in a YYYY-MM-DD format.
+
+```zsh
+python3 super.py set_time 2023-05-15
+```
+
 ## REPORTING
 
 There are three types of reports: Inventory, Revenue and Profit. Report can only be used in combination with one of these three.
